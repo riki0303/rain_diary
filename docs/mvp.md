@@ -76,12 +76,12 @@ end
 ### diariesテーブル
 
 | カラム名 | 型 | 制約 | 説明 |
-|---|---|---|---|
+|---|---|--|---|
 | id | integer | PK | |
 | user_id | integer | NOT NULL, FK | |
 | title | string | NOT NULL | 記録のタイトル |
 | body | text | NOT NULL | 本文 |
-| mood | integer | NULL可 | 気分（1〜5） |
+| mood | integer | NOT NULL | 気分（1〜5） |
 | recorded_on | date | NOT NULL | 記録した日付 |
 | created_at | datetime | | |
 | updated_at | datetime | | |
