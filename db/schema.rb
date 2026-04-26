@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_26_014112) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_26_020841) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "diaries", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.integer "mood", null: false
+    t.date "recorded_on", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_diaries_on_user_id"
+  end
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -25,4 +36,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_26_014112) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
+
+  create_table "weather_records", force: :cascade do |t|
+    t.string "city_name", null: false
+    t.datetime "created_at", null: false
+    t.string "description"
+    t.bigint "diary_id", null: false
+    t.integer "humidity"
+    t.float "rainfall_mm"
+    t.float "temp"
+    t.datetime "updated_at", null: false
+    t.string "weather_main", null: false
+    t.index ["diary_id"], name: "index_weather_records_on_diary_id"
+  end
+
+  add_foreign_key "diaries", "users"
+  add_foreign_key "weather_records", "diaries"
 end
