@@ -42,7 +42,29 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# Authentication
+gem "devise"
+# Authorization
+gem "pundit"
+# Haml templates
+gem "haml-rails"
+# Forms with Bootstrap
+gem "simple_form"
+# Pagination
+gem "kaminari"
+# HTTP client
+gem "faraday"
+# Load environment variables from .env
+gem "dotenv-rails"
+
 group :development, :test do
+  # RSpec for Rails
+  gem "rspec-rails"
+  # Test data factories
+  gem "factory_bot_rails"
+  # Fake data generator
+  gem "faker"
+
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
@@ -54,6 +76,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Rails best practices linter
+  gem "rails_best_practices", require: false
 end
 
 group :development do
