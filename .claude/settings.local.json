@@ -29,7 +29,8 @@
       "Bash(git diff:*)",
       "Bash(git *)",
       "Bash(bin/brakeman --no-pager)",
-      "Bash(bin/rails_best_practices)"
+      "Bash(bin/rails_best_practices)",
+      "Bash(bin/rails db:migrate *)"
     ]
   }
 }
