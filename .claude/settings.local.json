@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Bash(bundle exec:*)",
+      "Bash(gh issue:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Skill(start-issue)",
+      "Bash(bin/rails generate:*)",
+      "Bash(bin/rails db:migrate 2>&1)",
+      "Bash(bin/rubocop 2>&1)",
+      "Bash(bin/brakeman --no-pager 2>&1)",
+      "Bash(bin/rails_best_practices 2>&1)",
+      "Bash(bin/rails routes:*)",
+      "Bash(git add:*)",
+      "Skill(create-pr)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(grep:*)",
+      "Bash(bin/rubocop:*)",
+      "Skill(define-requirements)",
+      "Bash(bin/rails_best_practices .:*)",
+      "Bash(yarn build:css:*)",
+      "Bash(bundle install:*)",
+      "Bash(bin/rails g:*)",
+      "Bash(git worktree:*)",
+      "Bash(git diff:*)",
+      "Bash(git *)",
+      "Bash(bin/brakeman --no-pager)",
+      "Bash(bin/rails_best_practices)"
+    ]
+  }
+}
