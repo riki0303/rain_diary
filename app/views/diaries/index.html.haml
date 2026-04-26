@@ -1,0 +1,6 @@
+%h1 日記一覧
+
+- @diaries.each do |diary|
+  %div
+    = link_to diary.title, diary_path(diary)
+    = diary.recorded_on

@@ -1,0 +1,8 @@
+%h1= @diary.title
+
+%p= @diary.body
+%p= @diary.recorded_on
+%p= @diary.mood
+
+= link_to "編集", edit_diary_path(@diary)
+= link_to "一覧へ", diaries_path
