@@ -40,7 +40,7 @@
 /node_modules
 
 # IDE
-.idea
+.idea/
 
 # macOS
 .DS_Store
