@@ -80,4 +80,54 @@ RSpec.describe Diary, type: :model do
       expect { diary.destroy }.to change(WeatherRecord, :count).by(-1)
     end
   end
+
+  describe "#attach_weather!" do
+    let(:diary) { create(:diary) }
+    let(:weather_data) do
+      {
+        city_name: "Tokyo",
+        weather_main: "Rain",
+        description: "小雨",
+        temp: 14.5,
+        humidity: 82,
+        rainfall_mm: 3.2
+      }
+    end
+
+    context "WeatherService が天気データを返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(weather_data)
+      end
+
+      it "weather_record が作成される" do
+        expect { diary.attach_weather! }.to change { WeatherRecord.count }.by(1)
+      end
+
+      it "weather_record のカラムに正しい値が設定される" do
+        diary.attach_weather!
+        expect(diary.weather_record.city_name).to eq("Tokyo")
+        expect(diary.weather_record.weather_main).to eq("Rain")
+      end
+    end
+
+    context "WeatherService が nil を返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil)
+      end
+
+      it "weather_record が作成されない" do
+        expect { diary.attach_weather! }.not_to change { WeatherRecord.count }
+      end
+    end
+
+    context "WeatherService が空 Hash を返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return({})
+      end
+
+      it "weather_record が作成されない" do
+        expect { diary.attach_weather! }.not_to change { WeatherRecord.count }
+      end
+    end
+  end
 end

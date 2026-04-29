@@ -49,6 +49,34 @@ RSpec.describe "Diaries", type: :request do
       post diaries_path, params: valid_params
       expect(response).to redirect_to(diary_path(Diary.last))
     end
+
+    context "WeatherService が天気データを返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+          city_name: "Tokyo", weather_main: "Rain", description: "小雨",
+          temp: 14.5, humidity: 82, rainfall_mm: 3.2
+        )
+      end
+
+      it "weather_records が1件増加する" do
+        expect {
+          post diaries_path, params: valid_params
+        }.to change(WeatherRecord, :count).by(1)
+      end
+    end
+
+    context "WeatherService が nil を返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil)
+      end
+
+      it "日記は作成されるが weather_records は増えない" do
+        expect {
+          post diaries_path, params: valid_params
+        }.to change(user.diaries, :count).by(1)
+        expect(WeatherRecord.count).to eq(0)
+      end
+    end
   end
 
   describe "GET /diaries/:id/edit" do

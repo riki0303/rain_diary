@@ -19,7 +19,7 @@ class DiariesController < ApplicationController
     @diary = current_user.diaries.build(diary_params)
     authorize @diary
     if @diary.save
-      # TODO: Issue #5 完了後、@diary.attach_weather!（API失敗時も日記は保存済み）
+      @diary.attach_weather!
       redirect_to @diary, notice: "日記を作成しました。"
     else
       render :new, status: :unprocessable_entity

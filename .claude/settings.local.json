@@ -30,7 +30,13 @@
       "Bash(git *)",
       "Bash(bin/brakeman --no-pager)",
       "Bash(bin/rails_best_practices)",
-      "Bash(bin/rails db:migrate *)"
+      "Bash(bin/rails db:migrate *)",
+      "Bash(bin/brakeman *)",
+      "Bash(bundle *)",
+      "Bash(BUNDLE_PATH=vendor/bundle rtk rspec spec/models/diary_spec.rb spec/requests/diaries_spec.rb)",
+      "Bash(ruby --version)",
+      "Bash(gem list *)",
+      "Bash(rtk *)"
     ]
   }
 }
