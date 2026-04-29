@@ -1,8 +1,34 @@
-%h1= @diary.title
+.row.justify-content-center
+  .col-md-8
+    .card.mb-4
+      .card-header.d-flex.justify-content-between.align-items-center
+        %span.badge.bg-secondary= @diary.recorded_on.strftime("%Y年%m月%d日")
+        = mood_dots(@diary.mood)
+      .card-body
+        %h3.card-title= @diary.title
+        %div= simple_format @diary.body
 
-%p= @diary.body
-%p= @diary.recorded_on
-%p= @diary.mood
+    - if @diary.weather_record
+      .card.mb-4
+        .card-header
+          = weather_icon_tag(@diary.weather_main)
+          天気情報
+        .card-body
+          .row.text-center
+            .col
+              %small.text-muted 天気
+              %div= @diary.description
+            .col
+              %small.text-muted 気温
+              %div= "#{@diary.temp&.round(1)}℃"
+            .col
+              %small.text-muted 湿度
+              %div= "#{@diary.humidity}%"
+            .col
+              %small.text-muted 降水量
+              %div= "#{@diary.rainfall_mm}mm"
 
-= link_to "編集", edit_diary_path(@diary)
-= link_to "一覧へ", diaries_path
+    .d-flex.gap-2
+      = link_to "一覧へ", diaries_path, class: "btn btn-outline-secondary"
+      = link_to "編集", edit_diary_path(@diary), class: "btn btn-outline-primary"
+      = button_to "削除", diary_path(@diary), method: :delete, data: { turbo_confirm: "本当に削除しますか？" }, class: "btn btn-outline-danger"

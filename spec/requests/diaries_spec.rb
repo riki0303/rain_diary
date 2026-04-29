@@ -18,6 +18,41 @@ RSpec.describe "Diaries", type: :request do
         get diaries_path
         expect(response).to have_http_status(:ok)
       end
+
+      context "WeatherService が Rain を返すとき" do
+        before do
+          allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+            { weather_main: "Rain", city_name: "Tokyo", description: "雨", temp: 15.0, humidity: 80, rainfall_mm: 3.0 }
+          )
+        end
+
+        it "今日の雨を記録するリンクが表示される" do
+          get diaries_path
+          expect(response.body).to include("今日の雨を記録する")
+        end
+      end
+
+      context "WeatherService が Clear を返すとき" do
+        before do
+          allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+            { weather_main: "Clear", city_name: "Tokyo", description: "晴れ", temp: 25.0, humidity: 50, rainfall_mm: 0.0 }
+          )
+        end
+
+        it "今日は雨ではありませんが表示される" do
+          get diaries_path
+          expect(response.body).to include("今日は雨ではありません")
+        end
+      end
+
+      context "WeatherService が nil を返すとき" do
+        before { allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil) }
+
+        it "雨でない表示になる" do
+          get diaries_path
+          expect(response.body).to include("今日は雨ではありません")
+        end
+      end
     end
   end
 
@@ -112,6 +147,41 @@ RSpec.describe "Diaries", type: :request do
         delete diary_path(diary)
       }.to change(user.diaries, :count).by(-1)
       expect(response).to redirect_to(diaries_path)
+    end
+  end
+
+  context "他人の日記に対するアクセス" do
+    let(:other_user)   { create(:user) }
+    let!(:other_diary) { create(:diary, user: other_user) }
+
+    before { sign_in user }
+
+    describe "GET /diaries/:id" do
+      it "リダイレクトされる" do
+        get diary_path(other_diary)
+        expect(response).to redirect_to(root_path)
+      end
+    end
+
+    describe "GET /diaries/:id/edit" do
+      it "リダイレクトされる" do
+        get edit_diary_path(other_diary)
+        expect(response).to redirect_to(root_path)
+      end
+    end
+
+    describe "PATCH /diaries/:id" do
+      it "リダイレクトされる" do
+        patch diary_path(other_diary), params: { diary: { title: "改ざん" } }
+        expect(response).to redirect_to(root_path)
+      end
+    end
+
+    describe "DELETE /diaries/:id" do
+      it "リダイレクトされる" do
+        delete diary_path(other_diary)
+        expect(response).to redirect_to(root_path)
+      end
     end
   end
 end

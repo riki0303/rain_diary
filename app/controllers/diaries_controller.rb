@@ -2,8 +2,13 @@ class DiariesController < ApplicationController
   before_action :set_diary, only: %i[show edit update destroy]
 
   def index
-    @diaries = policy_scope(Diary).order(recorded_on: :desc)
-    # TODO: Issue #5 完了後、WeatherService で天気・雨判定を取得
+    scope = policy_scope(Diary)
+    @diaries      = scope.includes(:weather_record).order(recorded_on: :desc).page(params[:page])
+    @total_count  = scope.count
+    @yearly_count = scope.where(recorded_on: Date.current.all_year).count
+
+    weather    = WeatherService.new.fetch
+    @rainy_now = weather.present? && WeatherRecord.rainy_main?(weather[:weather_main])
   end
 
   def show
@@ -48,7 +53,7 @@ class DiariesController < ApplicationController
   private
 
   def set_diary
-    @diary = Diary.find(params[:id])
+    @diary = policy_scope(Diary).find(params[:id])
   end
 
   def diary_params

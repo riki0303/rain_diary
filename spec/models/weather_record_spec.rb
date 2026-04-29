@@ -29,4 +29,22 @@ RSpec.describe WeatherRecord, type: :model do
       end
     end
   end
+
+  describe "#rainy?" do
+    it "weather_mainがRainの場合はtrue" do
+      expect(build(:weather_record, weather_main: "Rain").rainy?).to be true
+    end
+
+    it "weather_mainがDrizzleの場合はtrue" do
+      expect(build(:weather_record, weather_main: "Drizzle").rainy?).to be true
+    end
+
+    it "weather_mainがClearの場合はfalse" do
+      expect(build(:weather_record, weather_main: "Clear").rainy?).to be false
+    end
+
+    it "weather_mainがCloudsの場合はfalse" do
+      expect(build(:weather_record, weather_main: "Clouds").rainy?).to be false
+    end
+  end
 end
