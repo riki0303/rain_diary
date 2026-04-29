@@ -1,6 +1,29 @@
-%h1 日記一覧
+- if @rainy_now
+  .alert.alert-info.d-flex.align-items-center.gap-3
+    %i.bi.bi-cloud-rain-fill.fs-4
+    %div
+      %strong 今日は雨です
+      = link_to "今日の雨を記録する", new_diary_path, class: "btn btn-primary btn-sm ms-3"
+- else
+  .text-muted.mb-3
+    %i.bi.bi-sun
+    今日は雨ではありません
 
-- @diaries.each do |diary|
-  %div
-    = link_to diary.title, diary_path(diary)
-    = diary.recorded_on
+.row.g-3.mb-4
+  .col-md-6
+    .card.text-center
+      .card-body
+        %h5.card-title.text-muted 総記録数
+        %p.display-6= @total_count
+  .col-md-6
+    .card.text-center
+      .card-body
+        %h5.card-title.text-muted 今年の記録
+        %p.display-6= @yearly_count
+
+.row.row-cols-1.row-cols-md-2.g-3
+  - @diaries.each do |diary|
+    .col
+      = render "diary_card", diary: diary
+
+= paginate @diaries
