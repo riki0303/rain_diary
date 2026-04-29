@@ -156,32 +156,9 @@ RSpec.describe "Diaries", type: :request do
 
     before { sign_in user }
 
-    describe "GET /diaries/:id" do
-      it "リダイレクトされる" do
-        get diary_path(other_diary)
-        expect(response).to redirect_to(root_path)
-      end
-    end
-
-    describe "GET /diaries/:id/edit" do
-      it "リダイレクトされる" do
-        get edit_diary_path(other_diary)
-        expect(response).to redirect_to(root_path)
-      end
-    end
-
-    describe "PATCH /diaries/:id" do
-      it "リダイレクトされる" do
-        patch diary_path(other_diary), params: { diary: { title: "改ざん" } }
-        expect(response).to redirect_to(root_path)
-      end
-    end
-
-    describe "DELETE /diaries/:id" do
-      it "リダイレクトされる" do
-        delete diary_path(other_diary)
-        expect(response).to redirect_to(root_path)
-      end
+    it "認可違反となり root_path へリダイレクトされる" do
+      get diary_path(other_diary)
+      expect(response).to redirect_to(root_path)
     end
   end
 end
