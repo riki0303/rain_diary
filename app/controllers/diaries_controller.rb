@@ -8,7 +8,7 @@ class DiariesController < ApplicationController
     @yearly_count = scope.where(recorded_on: Date.current.all_year).count
 
     weather    = WeatherService.new.fetch
-    @rainy_now = weather.present? && WeatherRecord.rainy_main?(weather[:weather_main])
+    @rainy_now = weather.present? && WeatherRecord.rainy?(weather[:weather_main])
   end
 
   def show

@@ -6,11 +6,7 @@ class WeatherRecord < ApplicationRecord
   validates :city_name, presence: true
   validates :weather_main, presence: true
 
-  def self.rainy_main?(weather_main)
+  def self.rainy?(weather_main)
     RAINY_MAINS.include?(weather_main)
-  end
-
-  def rainy?
-    self.class.rainy_main?(weather_main)
   end
 end

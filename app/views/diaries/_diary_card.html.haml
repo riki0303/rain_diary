@@ -3,7 +3,7 @@
     .d-flex.justify-content-between.align-items-start.mb-2
       %span.badge.bg-secondary= diary.recorded_on.strftime("%Y/%m/%d")
       - if diary.weather_record
-        = weather_icon_tag(diary.weather_main, extra_class: diary.rainy? ? "text-primary" : "text-info")
+        = weather_icon_tag(diary.weather_main, extra_class: WeatherRecord.rainy?(diary.weather_main) ? "text-primary" : "text-info")
     %h5.card-title= link_to diary.title, diary_path(diary), class: "stretched-link text-decoration-none text-dark"
     %p.card-text.text-muted.small= truncate(diary.body, length: 80)
     = mood_dots(diary.mood)

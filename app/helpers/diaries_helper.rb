@@ -8,7 +8,7 @@ module DiariesHelper
   }.freeze
 
   def mood_dots(mood)
-    filled = mood.to_i.clamp(0, 5)
+    filled = mood.to_i
     empty  = 5 - filled
     safe_join([
       safe_join(Array.new(filled) { tag.i(class: "bi bi-circle-fill text-warning") }),

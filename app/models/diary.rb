@@ -2,7 +2,7 @@ class Diary < ApplicationRecord
   belongs_to :user
   has_one :weather_record, dependent: :destroy
 
-  delegate :weather_main, :description, :temp, :humidity, :rainfall_mm, :rainy?,
+  delegate :weather_main, :description, :temp, :humidity, :rainfall_mm,
            to: :weather_record, allow_nil: true
 
   validates :title, presence: true
