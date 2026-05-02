@@ -18,8 +18,9 @@ class WeatherService
   private
 
   def fetch_uncached
-    Rails.logger.debug("[WeatherService] calling API")
     return nil if @api_key.blank?
+
+    Rails.logger.debug("[WeatherService] calling API")
 
     response = build_connection.get(ENDPOINT) do |req|
       req.params.merge!(
