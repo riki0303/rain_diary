@@ -5,4 +5,4 @@
     = f.input :title
     = f.input :body, as: :text, input_html: { rows: 8 }
     = f.input :mood, as: :select, collection: (1..5).map { |i| [i, i] }, include_blank: false
-    = f.button :submit, "保存", class: "btn btn-outline-primary"
+    = f.button :submit, "保存", class: "btn btn-primary"
