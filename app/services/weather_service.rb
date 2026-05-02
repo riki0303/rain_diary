@@ -4,12 +4,21 @@ class WeatherService
   CITY_NAME = "Tokyo"
   BASE_URL  = "https://api.openweathermap.org"
   ENDPOINT  = "/data/2.5/weather"
+  CACHE_KEY = "weather:current"
+  CACHE_TTL = 1.hour
 
   def initialize(api_key: ENV["OPENWEATHER_API_KEY"])
     @api_key = api_key
   end
 
   def fetch
+    Rails.cache.fetch(CACHE_KEY, expires_in: CACHE_TTL, skip_nil: true) { fetch_uncached }
+  end
+
+  private
+
+  def fetch_uncached
+    Rails.logger.debug("[WeatherService] calling API")
     return nil if @api_key.blank?
 
     response = build_connection.get(ENDPOINT) do |req|
@@ -28,8 +37,6 @@ class WeatherService
     Rails.logger.error("[WeatherService] Faraday error: #{e.class}")
     nil
   end
-
-  private
 
   def build_connection
     Faraday.new(url: BASE_URL) do |f|

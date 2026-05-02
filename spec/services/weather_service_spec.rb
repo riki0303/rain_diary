@@ -134,4 +134,61 @@ RSpec.describe WeatherService do
       end
     end
   end
+
+  describe "#fetch キャッシュ動作" do
+    include ActiveSupport::Testing::TimeHelpers
+
+    before do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    end
+
+    def counting_connection(count_ref, status:, body:)
+      stubs = Faraday::Adapter::Test::Stubs.new
+      stubs.get(WeatherService::ENDPOINT) do
+        count_ref[:n] += 1
+        [ status, { "Content-Type" => "application/json" }, body ]
+      end
+      Faraday.new(url: WeatherService::BASE_URL) { |f| f.response :json; f.adapter :test, stubs }
+    end
+
+    it "成功時: 2回呼んでも API は1回のみ呼ばれる" do
+      count = { n: 0 }
+      conn = counting_connection(count, status: 200, body: success_body_with_rain)
+      allow(service).to receive(:build_connection).and_return(conn)
+
+      result1 = service.fetch
+      result2 = service.fetch
+
+      expect(count[:n]).to eq(1)
+      expect(result1).to eq(result2)
+    end
+
+    it "失敗(nil)はキャッシュされず次回呼び出しで再試行する" do
+      stubs_500 = Faraday::Adapter::Test::Stubs.new
+      stubs_500.get(WeatherService::ENDPOINT) { [ 500, { "Content-Type" => "application/json" }, {} ] }
+      conn500 = Faraday.new(url: WeatherService::BASE_URL) { |f| f.response :json; f.adapter :test, stubs_500 }
+
+      stubs_200 = Faraday::Adapter::Test::Stubs.new
+      stubs_200.get(WeatherService::ENDPOINT) { [ 200, { "Content-Type" => "application/json" }, success_body_with_rain ] }
+      conn200 = Faraday.new(url: WeatherService::BASE_URL) { |f| f.response :json; f.adapter :test, stubs_200 }
+
+      allow(service).to receive(:build_connection).and_return(conn500, conn200)
+
+      expect(service.fetch).to be_nil
+      expect(service.fetch).to be_a(Hash)
+    end
+
+    it "TTL 経過後は API を再呼び出しする" do
+      count = { n: 0 }
+      conn = counting_connection(count, status: 200, body: success_body_with_rain)
+      allow(service).to receive(:build_connection).and_return(conn)
+
+      service.fetch
+      travel_to(WeatherService::CACHE_TTL.from_now + 1.second) do
+        service.fetch
+      end
+
+      expect(count[:n]).to eq(2)
+    end
+  end
 end
