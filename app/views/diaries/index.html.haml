@@ -3,7 +3,7 @@
     %i.bi.bi-cloud-rain-fill.fs-4
     %div
       %strong 今日は雨です
-      = link_to "今日の雨を記録する", new_diary_path, class: "btn btn-primary btn-sm ms-3"
+      = link_to "今日の雨を記録する", new_diary_path, class: "btn btn-outline-primary btn-sm ms-3"
 - else
   .text-muted.mb-3
     %i.bi.bi-sun
@@ -11,12 +11,12 @@
 
 .row.g-3.mb-4
   .col-md-6
-    .card.text-center
+    .card.text-center.shadow-sm.border-0
       .card-body
         %h5.card-title.text-muted 総記録数
         %p.display-6= @total_count
   .col-md-6
-    .card.text-center
+    .card.text-center.shadow-sm.border-0
       .card-body
         %h5.card-title.text-muted 今年の記録
         %p.display-6= @yearly_count
