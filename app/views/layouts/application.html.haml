@@ -21,17 +21,17 @@
     -# Includes all stylesheet files in app/assets/stylesheets
     = stylesheet_link_tag :app, "data-turbo-track": "reload"
     = javascript_importmap_tags
-  %body
-    %nav.navbar.navbar-expand-lg.navbar-dark.bg-primary.mb-0
+  %body.bg-primary-subtle
+    %nav.navbar.navbar-expand-lg.bg-white.border-bottom.mb-0
       .container
-        = link_to "Rain Diary", root_path, class: "navbar-brand"
+        = link_to "Rain Diary", root_path, class: "navbar-brand text-primary fw-bold"
         .d-flex.align-items-center.gap-2
           - if user_signed_in?
-            %span.navbar-text.text-white.me-2= current_user.email
-            = button_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn btn-outline-light btn-sm", form: { class: "m-0" }
+            %span.navbar-text.text-body-secondary.me-2= current_user.email
+            = button_to "ログアウト", destroy_user_session_path, method: :delete, class: "btn btn-outline-primary btn-sm", form: { class: "m-0" }
           - else
-            = link_to "新規登録", new_user_registration_path, class: "btn btn-outline-light btn-sm"
-            = link_to "ログイン", new_user_session_path, class: "btn btn-light btn-sm"
+            = link_to "新規登録", new_user_registration_path, class: "btn btn-outline-primary btn-sm"
+            = link_to "ログイン", new_user_session_path, class: "btn btn-primary btn-sm"
 
     - if notice
       .container.mt-3

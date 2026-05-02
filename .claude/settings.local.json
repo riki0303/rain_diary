@@ -36,7 +36,8 @@
       "Bash(BUNDLE_PATH=vendor/bundle rtk rspec spec/models/diary_spec.rb spec/requests/diaries_spec.rb)",
       "Bash(ruby --version)",
       "Bash(gem list *)",
-      "Bash(rtk *)"
+      "Bash(rtk *)",
+      "Bash(gh api *)"
     ]
   }
 }
