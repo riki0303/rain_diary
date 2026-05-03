@@ -23,6 +23,14 @@ RSpec.describe Diary, type: :model do
       it "titleがあれば有効" do
         expect(build(:diary, title: "タイトル")).to be_valid
       end
+
+      it "titleが100文字なら有効" do
+        expect(build(:diary, title: "a" * 100)).to be_valid
+      end
+
+      it "titleが101文字なら無効" do
+        expect(build(:diary, title: "a" * 101)).not_to be_valid
+      end
     end
 
     context "body" do
@@ -32,6 +40,14 @@ RSpec.describe Diary, type: :model do
 
       it "bodyがあれば有効" do
         expect(build(:diary, body: "本文")).to be_valid
+      end
+
+      it "bodyが10000文字なら有効" do
+        expect(build(:diary, body: "a" * 10_000)).to be_valid
+      end
+
+      it "bodyが10001文字なら無効" do
+        expect(build(:diary, body: "a" * 10_001)).not_to be_valid
       end
     end
 
