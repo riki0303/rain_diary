@@ -80,7 +80,6 @@ RSpec.describe "Diaries", type: :request do
       get diary_path(diary)
       expect(response.body).to include("bi-trash")
     end
-
   end
 
   describe "POST /diaries" do
