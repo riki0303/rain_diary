@@ -86,7 +86,7 @@ RSpec.describe "Diaries", type: :request do
     before { sign_in user }
 
     let(:valid_params) do
-      { diary: { title: "今日の日記", body: "晴れだった", recorded_on: Date.today, mood: 3 } }
+      { diary: { title: "今日の日記", body: "晴れだった", mood: 3 } }
     end
 
     it "ログインユーザーに紐づくdiaryを作成する" do
