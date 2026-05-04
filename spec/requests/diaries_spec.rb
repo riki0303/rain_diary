@@ -80,6 +80,16 @@ RSpec.describe "Diaries", type: :request do
       get diary_path(diary)
       expect(response.body).to include("bi-trash")
     end
+
+    it "ミートボールメニュー（三点リーダー）が描画される" do
+      get diary_path(diary)
+      expect(response.body).to include("bi-three-dots-vertical")
+    end
+
+    it "ドロップダウンメニュー要素が描画される" do
+      get diary_path(diary)
+      expect(response.body).to include("dropdown-menu")
+    end
   end
 
   describe "POST /diaries" do
