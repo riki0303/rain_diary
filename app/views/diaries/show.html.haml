@@ -7,12 +7,21 @@
         %span.badge.bg-secondary-subtle.text-secondary-emphasis= @diary.recorded_on.strftime("%Y年%m月%d日")
         .d-flex.align-items-center.gap-2
           = mood_dots(@diary.mood)
-          - if policy(@diary).edit?
-            = link_to edit_diary_path(@diary), class: "btn btn-sm btn-link link-secondary p-0", "aria-label": "編集" do
-              %i.bi.bi-pencil
-          - if policy(@diary).destroy?
-            = button_to diary_path(@diary), method: :delete, data: { turbo_confirm: "本当に削除しますか？" }, class: "btn btn-sm btn-link link-danger p-0", form: { class: "d-inline m-0" }, "aria-label": "削除" do
-              %i.bi.bi-trash
+          - if policy(@diary).edit? || policy(@diary).destroy?
+            .dropdown
+              %button.btn.btn-sm.btn-link.link-secondary.p-0{ type: "button", "data-bs-toggle": "dropdown", "aria-expanded": "false", "aria-label": "操作メニュー" }
+                %i.bi.bi-three-dots-vertical
+              %ul.dropdown-menu.dropdown-menu-end
+                - if policy(@diary).edit?
+                  %li
+                    = link_to edit_diary_path(@diary), class: "dropdown-item" do
+                      %i.bi.bi-pencil.me-2
+                      編集
+                - if policy(@diary).destroy?
+                  %li
+                    = button_to diary_path(@diary), method: :delete, data: { turbo_confirm: "本当に削除しますか？" }, class: "dropdown-item text-danger", form: { class: "m-0" } do
+                      %i.bi.bi-trash.me-2
+                      削除
       .card-body
         %h3.card-title= @diary.title
         %div= simple_format @diary.body
