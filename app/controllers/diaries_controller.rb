@@ -22,6 +22,7 @@ class DiariesController < ApplicationController
 
   def create
     @diary = current_user.diaries.build(diary_params)
+    @diary.recorded_on = Date.current # NOTE: 雨の日以外を選択出来ないように日付は固定
     authorize @diary
     if @diary.save
       @diary.attach_weather!
@@ -57,6 +58,6 @@ class DiariesController < ApplicationController
   end
 
   def diary_params
-    params.require(:diary).permit(:title, :body, :recorded_on, :mood)
+    params.require(:diary).permit(:title, :body, :mood)
   end
 end

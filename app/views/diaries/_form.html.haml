@@ -1,7 +1,9 @@
 = simple_form_for diary do |f|
   = f.error_notification
   .vstack.gap-3
-    = f.input :recorded_on, as: :date, input_html: { value: diary.recorded_on || Date.current }
+    .mb-3
+      %label.form-label 日付
+      %p.form-control-plaintext= l(diary.recorded_on || Date.current, format: :default)
     = f.input :title
     = f.input :body, as: :text, input_html: { rows: 8 }
     = f.input :mood, as: :select, collection: (1..5).map { |i| [i, i] }, include_blank: false
