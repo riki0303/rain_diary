@@ -65,6 +65,21 @@ RSpec.describe "Diaries", type: :request do
       get diary_path(diary)
       expect(response).to have_http_status(:ok)
     end
+
+    it "戻るボタンが描画される" do
+      get diary_path(diary)
+      expect(response.body).to include("戻る")
+    end
+
+    it "編集アイコンが描画される" do
+      get diary_path(diary)
+      expect(response.body).to include("bi-pencil")
+    end
+
+    it "削除アイコンが描画される" do
+      get diary_path(diary)
+      expect(response.body).to include("bi-trash")
+    end
   end
 
   describe "POST /diaries" do
@@ -114,6 +129,15 @@ RSpec.describe "Diaries", type: :request do
     end
   end
 
+  describe "GET /diaries/new" do
+    before { sign_in user }
+
+    it "戻るボタンが描画される" do
+      get new_diary_path
+      expect(response.body).to include("戻る")
+    end
+  end
+
   describe "GET /diaries/:id/edit" do
     let!(:diary) { create(:diary, user: user) }
 
@@ -122,6 +146,11 @@ RSpec.describe "Diaries", type: :request do
     it "自分のdiaryの編集ページを表示する" do
       get edit_diary_path(diary)
       expect(response).to have_http_status(:ok)
+    end
+
+    it "戻るボタンが描画される" do
+      get edit_diary_path(diary)
+      expect(response.body).to include("戻る")
     end
   end
 

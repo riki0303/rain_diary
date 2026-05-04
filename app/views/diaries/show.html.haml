@@ -1,9 +1,18 @@
+= render "shared/back_button"
+
 .row.justify-content-center
   .col-md-8
     .card.mb-4.shadow-sm.border-0
       .card-header.d-flex.justify-content-between.align-items-center
         %span.badge.bg-secondary-subtle.text-secondary-emphasis= @diary.recorded_on.strftime("%Y年%m月%d日")
-        = mood_dots(@diary.mood)
+        .d-flex.align-items-center.gap-2
+          = mood_dots(@diary.mood)
+          - if policy(@diary).edit?
+            = link_to edit_diary_path(@diary), class: "btn btn-sm btn-link link-secondary p-0", "aria-label": "編集" do
+              %i.bi.bi-pencil
+          - if policy(@diary).destroy?
+            = button_to diary_path(@diary), method: :delete, data: { turbo_confirm: "本当に削除しますか？" }, class: "btn btn-sm btn-link link-danger p-0", form: { class: "d-inline m-0" }, "aria-label": "削除" do
+              %i.bi.bi-trash
       .card-body
         %h3.card-title= @diary.title
         %div= simple_format @diary.body
@@ -27,8 +36,3 @@
             .col
               %small.text-muted 降水量
               %div= "#{@diary.rainfall_mm}mm"
-
-    .d-flex.gap-2
-      = link_to "一覧へ", diaries_path, class: "btn btn-secondary"
-      = link_to "編集", edit_diary_path(@diary), class: "btn btn-primary"
-      = button_to "削除", diary_path(@diary), method: :delete, data: { turbo_confirm: "本当に削除しますか？" }, class: "btn btn-outline-danger"
