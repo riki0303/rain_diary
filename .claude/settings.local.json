@@ -37,7 +37,11 @@
       "Bash(ruby --version)",
       "Bash(gem list *)",
       "Bash(rtk *)",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(env)",
+      "Bash(/Users/kokuboriki/.rbenv/shims/bundle exec *)",
+      "Bash(/Users/kokuboriki/dev/rain_diary/.claude/worktrees/agent-a03940843826d9f3b/bin/rubocop *)",
+      "Bash(/bin/zsh *)"
     ]
   }
 }
