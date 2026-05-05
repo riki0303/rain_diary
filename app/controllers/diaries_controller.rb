@@ -31,7 +31,7 @@ class DiariesController < ApplicationController
     @diary.recorded_on = Date.current # NOTE: 雨の日以外を選択出来ないように日付は固定
     authorize @diary
 
-    # TODO: 早期リターン周りをpriavteに隠蔽しても良いかも
+    # TODO: 早期リターン周りをprivateに隠蔽しても良いかも
     coords = location_params
     if coords.nil?
       flash.now[:alert] = "位置情報を許可してください"

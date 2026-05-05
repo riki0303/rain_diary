@@ -1,62 +1,36 @@
-import { Controller } from "@hotwired/stimulus"
+import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["latitude", "longitude", "submit", "message", "newLink"]
-  static values = { mode: { type: String, default: "form" } }
+  static targets = ["latitude", "longitude"];
 
   connect() {
     if (!navigator.geolocation) {
-      this.handleError()
-      return
+      return;
     }
     navigator.geolocation.getCurrentPosition(
       (position) => this.handleSuccess(position),
-      () => this.handleError(),
+      () => {}, // 座標未取得はサーバー側バリデーションで弾く
       { timeout: 10000 }
-    )
+    );
   }
 
   handleSuccess(position) {
-    const { latitude, longitude } = position.coords
-    debugger
+    const { latitude, longitude } = position.coords;
 
-    if (this.modeValue === "index") {
-      const searchParams = new URLSearchParams(window.location.search)
-      if (!searchParams.has("latitude") && !searchParams.has("longitude")) {
-        const url = new URL(window.location.href)
-        url.searchParams.set("latitude", latitude)
-        url.searchParams.set("longitude", longitude)
-        window.location.replace(url.toString())
-        return
-      }
+    // diary#new
+    if (this.hasLatitudeTarget && this.hasLongitudeTarget) {
+      this.latitudeTarget.value = latitude;
+      this.longitudeTarget.value = longitude;
+      return;
     }
 
-    if (this.hasLatitudeTarget) {
-      this.latitudeTarget.value = latitude
+    // diary#index
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("latitude") && url.searchParams.has("longitude")) {
+      return;
     }
-    if (this.hasLongitudeTarget) {
-      this.longitudeTarget.value = longitude
-    }
-    if (this.hasSubmitTarget) {
-      this.submitTarget.disabled = false
-    }
-    if (this.hasMessageTarget) {
-      this.messageTarget.classList.add("d-none")
-    }
-    if (this.hasNewLinkTarget) {
-      this.newLinkTarget.classList.remove("d-none")
-    }
-  }
-
-  handleError() {
-    if (this.hasSubmitTarget) {
-      this.submitTarget.disabled = true
-    }
-    if (this.hasMessageTarget) {
-      this.messageTarget.classList.remove("d-none")
-    }
-    if (this.hasNewLinkTarget) {
-      this.newLinkTarget.classList.add("d-none")
-    }
+    url.searchParams.set("latitude", latitude);
+    url.searchParams.set("longitude", longitude);
+    window.location.replace(url.toString());
   }
 }
