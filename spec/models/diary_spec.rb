@@ -116,6 +116,7 @@ RSpec.describe Diary, type: :model do
       end
     end
 
+    # TODO: context update にまとめる
     context "雨判定 (current_weather_main)" do
       it "current_weather_main が Rain なら有効" do
         expect(build(:diary, current_weather_main: "Rain")).to be_valid
