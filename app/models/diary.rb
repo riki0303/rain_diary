@@ -13,8 +13,8 @@ class Diary < ApplicationRecord
   validate :recorded_on_must_be_today, on: :create
   validate :recorded_on_must_not_change, on: :update
 
-  def attach_weather!
-    weather_data = WeatherService.new.fetch
+  def attach_weather!(latitude:, longitude:)
+    weather_data = WeatherService.new(latitude:, longitude:).fetch
     return if weather_data.blank?
 
     create_weather_record!(weather_data)
