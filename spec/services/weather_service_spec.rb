@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe WeatherService do
   let(:api_key) { "test_api_key" }
-  let(:service) { described_class.new(api_key: api_key) }
+  let(:service) { described_class.new(latitude: 35.68, longitude: 139.65, api_key: api_key) }
 
   let(:success_body_with_rain) do
     {
@@ -76,7 +76,7 @@ RSpec.describe WeatherService do
     end
 
     context "APIキーが nil の場合" do
-      let(:service) { described_class.new(api_key: nil) }
+      let(:service) { described_class.new(latitude: 35.68, longitude: 139.65, api_key: nil) }
 
       it "nil を返し HTTP リクエストを発生させない" do
         expect(service).not_to receive(:build_connection)
@@ -85,7 +85,7 @@ RSpec.describe WeatherService do
     end
 
     context "APIキーが空文字の場合" do
-      let(:service) { described_class.new(api_key: "") }
+      let(:service) { described_class.new(latitude: 35.68, longitude: 139.65, api_key: "") }
 
       it "nil を返し HTTP リクエストを発生させない" do
         expect(service).not_to receive(:build_connection)
@@ -187,6 +187,22 @@ RSpec.describe WeatherService do
       travel_to(WeatherService::CACHE_TTL.from_now + 1.second) do
         service.fetch
       end
+
+      expect(count[:n]).to eq(2)
+    end
+
+    it "異なる緯度経度では別々にキャッシュされる" do
+      count = { n: 0 }
+      conn = counting_connection(count, status: 200, body: success_body_with_rain)
+
+      service_a = described_class.new(latitude: 35.68, longitude: 139.65, api_key: api_key)
+      service_b = described_class.new(latitude: 34.69, longitude: 135.50, api_key: api_key)
+
+      allow(service_a).to receive(:build_connection).and_return(conn)
+      allow(service_b).to receive(:build_connection).and_return(conn)
+
+      service_a.fetch
+      service_b.fetch
 
       expect(count[:n]).to eq(2)
     end

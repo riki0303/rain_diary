@@ -19,7 +19,28 @@ RSpec.describe "Diaries", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
-      context "WeatherService が Rain を返すとき" do
+      context "lat/lng クエリなし" do
+        it "位置情報許可案内が表示される" do
+          get diaries_path
+          expect(response.body).to include("位置情報を許可してください")
+        end
+      end
+
+      context "lat/lng が範囲外の値の場合" do
+        it "位置情報許可案内が表示される（無効な座標は nil 扱い）" do
+          get diaries_path, params: { latitude: 999, longitude: 999 }
+          expect(response.body).to include("位置情報を許可してください")
+        end
+      end
+
+      context "lat/lng が 0, 0（無効扱い）の場合" do
+        it "位置情報許可案内が表示される" do
+          get diaries_path, params: { latitude: 0, longitude: 0 }
+          expect(response.body).to include("位置情報を許可してください")
+        end
+      end
+
+      context "lat/lng クエリあり・WeatherService が Rain を返すとき" do
         before do
           allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
             { weather_main: "Rain", city_name: "Tokyo", description: "雨", temp: 15.0, humidity: 80, rainfall_mm: 3.0 }
@@ -27,12 +48,12 @@ RSpec.describe "Diaries", type: :request do
         end
 
         it "今日の雨を記録するリンクが表示される" do
-          get diaries_path
+          get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
           expect(response.body).to include("今日の雨を記録する")
         end
       end
 
-      context "WeatherService が Clear を返すとき" do
+      context "lat/lng クエリあり・WeatherService が Clear を返すとき" do
         before do
           allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
             { weather_main: "Clear", city_name: "Tokyo", description: "晴れ", temp: 25.0, humidity: 50, rainfall_mm: 0.0 }
@@ -40,16 +61,16 @@ RSpec.describe "Diaries", type: :request do
         end
 
         it "今日は雨ではありませんが表示される" do
-          get diaries_path
+          get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
           expect(response.body).to include("今日は雨ではありません")
         end
       end
 
-      context "WeatherService が nil を返すとき" do
+      context "lat/lng クエリあり・WeatherService が nil を返すとき" do
         before { allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil) }
 
         it "雨でない表示になる" do
-          get diaries_path
+          get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
           expect(response.body).to include("今日は雨ではありません")
         end
       end
@@ -86,7 +107,7 @@ RSpec.describe "Diaries", type: :request do
     before { sign_in user }
 
     let(:valid_params) do
-      { diary: { title: "今日の日記", body: "晴れだった", mood: 3 } }
+      { diary: { title: "今日の日記", body: "晴れだった", mood: 3 }, latitude: 35.68, longitude: 139.65 }
     end
 
     it "ログインユーザーに紐づくdiaryを作成する" do
@@ -125,6 +146,62 @@ RSpec.describe "Diaries", type: :request do
           post diaries_path, params: valid_params
         }.to change(user.diaries, :count).by(1)
         expect(WeatherRecord.count).to eq(0)
+      end
+    end
+
+    context "latitude / longitude が欠落している場合" do
+      let(:params_without_location) do
+        { diary: { title: "今日の日記", body: "晴れだった", mood: 3 } }
+      end
+
+      it "422 Unprocessable Entity を返す" do
+        post diaries_path, params: params_without_location
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it "日記が作成されない" do
+        expect {
+          post diaries_path, params: params_without_location
+        }.not_to change(user.diaries, :count)
+      end
+
+      it "位置情報エラーメッセージが表示される" do
+        post diaries_path, params: params_without_location
+        expect(response.body).to include("位置情報を許可してください")
+      end
+    end
+
+    context "latitude / longitude が無効な値（0, 0）の場合" do
+      let(:invalid_location_params) do
+        { diary: { title: "今日の日記", body: "晴れだった", mood: 3 }, latitude: 0, longitude: 0 }
+      end
+
+      it "422 Unprocessable Entity を返す" do
+        post diaries_path, params: invalid_location_params
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it "日記が作成されない" do
+        expect {
+          post diaries_path, params: invalid_location_params
+        }.not_to change(user.diaries, :count)
+      end
+    end
+
+    context "latitude / longitude が範囲外の値の場合" do
+      let(:out_of_range_params) do
+        { diary: { title: "今日の日記", body: "晴れだった", mood: 3 }, latitude: 999, longitude: 999 }
+      end
+
+      it "422 Unprocessable Entity を返す" do
+        post diaries_path, params: out_of_range_params
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it "日記が作成されない" do
+        expect {
+          post diaries_path, params: out_of_range_params
+        }.not_to change(user.diaries, :count)
       end
     end
   end

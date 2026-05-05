@@ -1,21 +1,23 @@
 class WeatherService
-  LATITUDE  = 35.6762
-  LONGITUDE = 139.6503
-  CITY_NAME = "Tokyo"
   BASE_URL  = "https://api.openweathermap.org"
   ENDPOINT  = "/data/2.5/weather"
-  CACHE_KEY = "weather:current"
   CACHE_TTL = 1.hour
 
-  def initialize(api_key: ENV["OPENWEATHER_API_KEY"])
-    @api_key = api_key
+  def initialize(latitude:, longitude:, api_key: ENV["OPENWEATHER_API_KEY"])
+    @latitude  = latitude
+    @longitude = longitude
+    @api_key   = api_key
   end
 
   def fetch
-    Rails.cache.fetch(CACHE_KEY, expires_in: CACHE_TTL, skip_nil: true) { fetch_uncached }
+    Rails.cache.fetch(cache_key, expires_in: CACHE_TTL, skip_nil: true) { fetch_uncached }
   end
 
   private
+
+  def cache_key
+    "weather:current:#{@latitude.to_f.round(2)}:#{@longitude.to_f.round(2)}"
+  end
 
   def fetch_uncached
     return nil if @api_key.blank?
@@ -24,8 +26,8 @@ class WeatherService
 
     response = build_connection.get(ENDPOINT) do |req|
       req.params.merge!(
-        lat:   LATITUDE,
-        lon:   LONGITUDE,
+        lat:   @latitude,
+        lon:   @longitude,
         units: "metric",
         lang:  "ja",
         appid: @api_key
@@ -50,7 +52,7 @@ class WeatherService
     weather = body.dig("weather", 0) || {}
     main    = body["main"] || {}
     {
-      city_name:    body["name"] || CITY_NAME,
+      city_name:    body["name"],
       weather_main: weather["main"],
       description:  weather["description"],
       temp:         main["temp"],

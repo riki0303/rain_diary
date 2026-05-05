@@ -144,11 +144,11 @@ RSpec.describe Diary, type: :model do
       end
 
       it "weather_record が作成される" do
-        expect { diary.attach_weather! }.to change { WeatherRecord.count }.by(1)
+        expect { diary.attach_weather!(latitude: 35.68, longitude: 139.65) }.to change { WeatherRecord.count }.by(1)
       end
 
       it "weather_record のカラムに正しい値が設定される" do
-        diary.attach_weather!
+        diary.attach_weather!(latitude: 35.68, longitude: 139.65)
         expect(diary.weather_record.city_name).to eq("Tokyo")
         expect(diary.weather_record.weather_main).to eq("Rain")
       end
@@ -160,7 +160,7 @@ RSpec.describe Diary, type: :model do
       end
 
       it "weather_record が作成されない" do
-        expect { diary.attach_weather! }.not_to change { WeatherRecord.count }
+        expect { diary.attach_weather!(latitude: 35.68, longitude: 139.65) }.not_to change { WeatherRecord.count }
       end
     end
 
@@ -170,7 +170,7 @@ RSpec.describe Diary, type: :model do
       end
 
       it "weather_record が作成されない" do
-        expect { diary.attach_weather! }.not_to change { WeatherRecord.count }
+        expect { diary.attach_weather!(latitude: 35.68, longitude: 139.65) }.not_to change { WeatherRecord.count }
       end
     end
   end

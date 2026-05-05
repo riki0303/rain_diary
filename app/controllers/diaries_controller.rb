@@ -7,8 +7,13 @@ class DiariesController < ApplicationController
     @total_count  = scope.count
     @yearly_count = scope.where(recorded_on: Date.current.all_year).count
 
-    weather    = WeatherService.new.fetch
-    @rainy_now = weather.present? && WeatherRecord.rainy?(weather[:weather_main])
+    coords = location_params
+    if coords
+      weather    = WeatherService.new(latitude: coords[0], longitude: coords[1]).fetch
+      @rainy_now = weather.present? && WeatherRecord.rainy?(weather[:weather_main])
+    else
+      @rainy_now = nil
+    end
   end
 
   def show
@@ -24,8 +29,18 @@ class DiariesController < ApplicationController
     @diary = current_user.diaries.build(diary_params)
     @diary.recorded_on = Date.current # NOTE: 雨の日以外を選択出来ないように日付は固定
     authorize @diary
+
+    coords = location_params
+    if coords.nil?
+      flash.now[:alert] = "位置情報を許可してください"
+      return render :new, status: :unprocessable_entity
+    end
+
+    latitude  = coords[0]
+    longitude = coords[1]
+
     if @diary.save
-      @diary.attach_weather!
+      @diary.attach_weather!(latitude:, longitude:)
       redirect_to @diary, notice: "日記を作成しました。"
     else
       render :new, status: :unprocessable_entity
@@ -59,5 +74,14 @@ class DiariesController < ApplicationController
 
   def diary_params
     params.require(:diary).permit(:title, :body, :mood)
+  end
+
+  def location_params
+    lat = params[:latitude].to_f
+    lng = params[:longitude].to_f
+    # TODO: ロジックを切り出す
+    return nil unless lat.between?(-90, 90) && lng.between?(-180, 180) && (lat != 0.0 || lng != 0.0)
+
+    [ lat, lng ]
   end
 end

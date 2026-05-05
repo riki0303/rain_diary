@@ -1,5 +1,10 @@
 = simple_form_for diary do |f|
   = f.error_notification
+  - if local_assigns[:geolocation]
+    %input{ type: "hidden", name: "latitude", data: { geolocation_target: "latitude" } }
+    %input{ type: "hidden", name: "longitude", data: { geolocation_target: "longitude" } }
+    .alert.alert-warning{ data: { geolocation_target: "message" } }
+      位置情報の取得を許可してください。ブラウザのアドレスバー横のアイコンから許可できます。
   .vstack.gap-3
     .mb-3
       %label.form-label 日付
@@ -7,4 +12,6 @@
     = f.input :title
     = f.input :body, as: :text, input_html: { rows: 8 }
     = f.input :mood, as: :select, collection: (1..5).map { |i| [i, i] }, include_blank: false
-    = f.button :submit, "保存", class: "btn btn-primary"
+    = f.button :submit, "保存", class: "btn btn-primary",
+        disabled: local_assigns[:geolocation] ? true : false,
+        data: (local_assigns[:geolocation] ? { geolocation_target: "submit" } : {})
