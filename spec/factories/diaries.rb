@@ -5,5 +5,6 @@ FactoryBot.define do
     body { "家でずっとNetflixを見ていた。" }
     mood { 3 }
     recorded_on { Date.current }
+    current_weather_main { "Rain" }
   end
 end

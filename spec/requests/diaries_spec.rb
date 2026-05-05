@@ -104,10 +104,16 @@ RSpec.describe "Diaries", type: :request do
   end
 
   describe "POST /diaries" do
-    before { sign_in user }
-
     let(:valid_params) do
       { diary: { title: "今日の日記", body: "晴れだった", mood: 3 }, latitude: 35.68, longitude: 139.65 }
+    end
+
+    before do
+      sign_in user
+      allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+        city_name: "Tokyo", weather_main: "Rain", description: "小雨",
+        temp: 14.5, humidity: 82, rainfall_mm: 3.2
+      )
     end
 
     it "ログインユーザーに紐づくdiaryを作成する" do
@@ -122,13 +128,6 @@ RSpec.describe "Diaries", type: :request do
     end
 
     context "WeatherService が天気データを返す場合" do
-      before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
-          city_name: "Tokyo", weather_main: "Rain", description: "小雨",
-          temp: 14.5, humidity: 82, rainfall_mm: 3.2
-        )
-      end
-
       it "weather_records が1件増加する" do
         expect {
           post diaries_path, params: valid_params
@@ -141,11 +140,60 @@ RSpec.describe "Diaries", type: :request do
         allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil)
       end
 
-      it "日記は作成されるが weather_records は増えない" do
+      it "日記が作成されない" do
+        expect {
+          post diaries_path, params: valid_params
+        }.not_to change(user.diaries, :count)
+      end
+
+      it "422 を返す" do
+        post diaries_path, params: valid_params
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it "天気取得失敗メッセージが表示される" do
+        post diaries_path, params: valid_params
+        expect(response.body).to include("現在の天気が取得できませんでした")
+      end
+    end
+
+    context "WeatherService が Clear を返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+          city_name: "Tokyo", weather_main: "Clear", description: "晴れ",
+          temp: 25.0, humidity: 50, rainfall_mm: 0.0
+        )
+      end
+
+      it "422 を返す" do
+        post diaries_path, params: valid_params
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it "日記が作成されない" do
+        expect {
+          post diaries_path, params: valid_params
+        }.not_to change(user.diaries, :count)
+      end
+
+      it "雨の日のみメッセージが表示される" do
+        post diaries_path, params: valid_params
+        expect(response.body).to include("雨の日のみ日記を記録できます")
+      end
+    end
+
+    context "WeatherService が Drizzle を返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+          city_name: "Tokyo", weather_main: "Drizzle", description: "霧雨",
+          temp: 14.0, humidity: 85, rainfall_mm: 1.0
+        )
+      end
+
+      it "日記作成成功" do
         expect {
           post diaries_path, params: valid_params
         }.to change(user.diaries, :count).by(1)
-        expect(WeatherRecord.count).to eq(0)
       end
     end
 

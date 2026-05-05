@@ -2,6 +2,8 @@ class Diary < ApplicationRecord
   belongs_to :user
   has_one :weather_record, dependent: :destroy
 
+  attr_accessor :current_weather_main
+
   delegate :weather_main, :description, :temp, :humidity, :rainfall_mm,
            to: :weather_record, allow_nil: true
 
@@ -11,14 +13,12 @@ class Diary < ApplicationRecord
   validates :mood, presence: true, numericality: { only_integer: true }, inclusion: { in: 1..5 }
 
   validate :recorded_on_must_be_today, on: :create
+  validate :weather_must_be_rainy, on: :create
   validate :recorded_on_must_not_change, on: :update
-  # TODO: 雨でない場合は日記を保存出来ないバリデーションを追加する
 
-  def attach_weather!(latitude:, longitude:)
-    weather_data = WeatherService.new(latitude:, longitude:).fetch
-    return if weather_data.blank?
-
-    create_weather_record!(weather_data)
+  def assign_weather(weather_data)
+    self.current_weather_main = weather_data[:weather_main] # バリデーションチェック用
+    build_weather_record(weather_data)
   end
 
   private
@@ -31,5 +31,11 @@ class Diary < ApplicationRecord
 
   def recorded_on_must_not_change
     errors.add(:recorded_on, "は変更できません") if recorded_on_changed?
+  end
+
+  def weather_must_be_rainy
+    return if WeatherRecord.rainy?(current_weather_main)
+
+    errors.add(:base, "雨の日のみ日記を記録できます")
   end
 end
