@@ -115,6 +115,50 @@ RSpec.describe Diary, type: :model do
         expect(diary).not_to be_valid
       end
     end
+
+    context "雨判定 (current_weather_main)" do
+      it "current_weather_main が Rain なら有効" do
+        expect(build(:diary, current_weather_main: "Rain")).to be_valid
+      end
+
+      it "current_weather_main が Drizzle なら有効（境界値）" do
+        expect(build(:diary, current_weather_main: "Drizzle")).to be_valid
+      end
+
+      it "current_weather_main が Clear なら無効" do
+        diary = build(:diary, current_weather_main: "Clear")
+        expect(diary).not_to be_valid
+        expect(diary.errors[:base]).to include("雨の日のみ日記を記録できます")
+      end
+
+      it "current_weather_main が Clouds なら無効" do
+        diary = build(:diary, current_weather_main: "Clouds")
+        expect(diary).not_to be_valid
+        expect(diary.errors[:base]).to include("雨の日のみ日記を記録できます")
+      end
+
+      it "current_weather_main が Thunderstorm なら無効" do
+        diary = build(:diary, current_weather_main: "Thunderstorm")
+        expect(diary).not_to be_valid
+        expect(diary.errors[:base]).to include("雨の日のみ日記を記録できます")
+      end
+
+      it "current_weather_main が nil なら無効" do
+        diary = build(:diary, current_weather_main: nil)
+        expect(diary).not_to be_valid
+        expect(diary.errors[:base]).to include("雨の日のみ日記を記録できます")
+      end
+
+      context "on: :update" do
+        let!(:diary) { create(:diary) }
+
+        it "current_weather_main 未設定でも更新時には有効" do
+          diary.current_weather_main = nil
+          diary.title = "新しいタイトル"
+          expect(diary).to be_valid
+        end
+      end
+    end
   end
 
   describe "dependent: :destroy" do
@@ -125,53 +169,23 @@ RSpec.describe Diary, type: :model do
     end
   end
 
-  describe "#attach_weather!" do
-    let(:diary) { create(:diary) }
+  describe "#assign_weather" do
+    let(:diary) { build(:diary, current_weather_main: nil) }
     let(:weather_data) do
-      {
-        city_name: "Tokyo",
-        weather_main: "Rain",
-        description: "小雨",
-        temp: 14.5,
-        humidity: 82,
-        rainfall_mm: 3.2
-      }
+      { weather_main: "Rain", city_name: "Tokyo", description: "雨",
+        temp: 15.0, humidity: 80, rainfall_mm: 3.0 }
     end
 
-    context "WeatherService が天気データを返す場合" do
-      before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(weather_data)
-      end
-
-      it "weather_record が作成される" do
-        expect { diary.attach_weather!(latitude: 35.68, longitude: 139.65) }.to change { WeatherRecord.count }.by(1)
-      end
-
-      it "weather_record のカラムに正しい値が設定される" do
-        diary.attach_weather!(latitude: 35.68, longitude: 139.65)
-        expect(diary.weather_record.city_name).to eq("Tokyo")
-        expect(diary.weather_record.weather_main).to eq("Rain")
-      end
+    it "current_weather_main にバリデーション用の値をセットする" do
+      diary.assign_weather(weather_data)
+      expect(diary.current_weather_main).to eq("Rain")
     end
 
-    context "WeatherService が nil を返す場合" do
-      before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil)
-      end
-
-      it "weather_record が作成されない" do
-        expect { diary.attach_weather!(latitude: 35.68, longitude: 139.65) }.not_to change { WeatherRecord.count }
-      end
-    end
-
-    context "WeatherService が空 Hash を返す場合" do
-      before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return({})
-      end
-
-      it "weather_record が作成されない" do
-        expect { diary.attach_weather!(latitude: 35.68, longitude: 139.65) }.not_to change { WeatherRecord.count }
-      end
+    it "weather_record を build する（保存はしない）" do
+      diary.assign_weather(weather_data)
+      expect(diary.weather_record).to be_present
+      expect(diary.weather_record).to be_new_record
+      expect(diary.weather_record.weather_main).to eq("Rain")
     end
   end
 end

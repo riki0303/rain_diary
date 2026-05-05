@@ -7,6 +7,7 @@ class DiariesController < ApplicationController
     @total_count  = scope.count
     @yearly_count = scope.where(recorded_on: Date.current.all_year).count
 
+    # TODO: createアクションと同様に、位置情報の未許可 or API通信エラーかで処理を分ける
     coords = location_params
     if coords
       weather    = WeatherService.new(latitude: coords[0], longitude: coords[1]).fetch
@@ -30,17 +31,23 @@ class DiariesController < ApplicationController
     @diary.recorded_on = Date.current # NOTE: 雨の日以外を選択出来ないように日付は固定
     authorize @diary
 
+    # TODO: 早期リターン周りをpriavteに隠蔽しても良いかも
     coords = location_params
     if coords.nil?
       flash.now[:alert] = "位置情報を許可してください"
       return render :new, status: :unprocessable_entity
     end
 
-    latitude  = coords[0]
-    longitude = coords[1]
+    latitude, longitude = coords
+    weather_data = WeatherService.new(latitude:, longitude:).fetch
+    if weather_data.blank?
+      flash.now[:alert] = "現在の天気が取得できませんでした。しばらく経ってからお試しください"
+      return render :new, status: :unprocessable_entity
+    end
+
+    @diary.assign_weather(weather_data)
 
     if @diary.save
-      @diary.attach_weather!(latitude:, longitude:)
       redirect_to @diary, notice: "日記を作成しました。"
     else
       render :new, status: :unprocessable_entity

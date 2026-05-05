@@ -1,5 +1,9 @@
 = simple_form_for diary do |f|
   = f.error_notification
+  - if diary.errors[:base].any?
+    .alert.alert-danger
+      - diary.errors[:base].each do |msg|
+        %p= msg
   - if local_assigns[:geolocation]
     %input{ type: "hidden", name: "latitude", data: { geolocation_target: "latitude" } }
     %input{ type: "hidden", name: "longitude", data: { geolocation_target: "longitude" } }
