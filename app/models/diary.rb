@@ -12,6 +12,7 @@ class Diary < ApplicationRecord
 
   validate :recorded_on_must_be_today, on: :create
   validate :recorded_on_must_not_change, on: :update
+  # TODO: 雨でない場合は日記を保存出来ないバリデーションを追加する
 
   def attach_weather!(latitude:, longitude:)
     weather_data = WeatherService.new(latitude:, longitude:).fetch
