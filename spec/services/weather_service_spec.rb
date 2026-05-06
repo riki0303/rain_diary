@@ -93,11 +93,27 @@ RSpec.describe WeatherService do
       end
     end
 
+    context "レスポンスが 400 の場合" do
+      before { stub_connection(status: 400, body: { "message" => "bad request" }) }
+
+      it ":bad_request を返す" do
+        expect(service.fetch).to eq(:bad_request)
+      end
+    end
+
+    context "レスポンスが 401 の場合" do
+      before { stub_connection(status: 401, body: { "message" => "unauthorized" }) }
+
+      it ":unauthorized を返す" do
+        expect(service.fetch).to eq(:unauthorized)
+      end
+    end
+
     context "レスポンスが 404 の場合" do
       before { stub_connection(status: 404, body: { "message" => "not found" }) }
 
-      it "nil を返す" do
-        expect(service.fetch).to be_nil
+      it ":not_found を返す" do
+        expect(service.fetch).to eq(:not_found)
       end
     end
 
