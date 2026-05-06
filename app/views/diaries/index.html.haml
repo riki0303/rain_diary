@@ -1,5 +1,5 @@
 .container{ data: { controller: "geolocation" } }
-  - if @rainy_now.nil?
+  - if @location_missing
     .alert.alert-info
       天気を確認するには位置情報を許可してください。
   - elsif @rainy_now
@@ -8,7 +8,7 @@
       %div
         %strong 今日は雨です
         = link_to "今日の雨を記録する", new_diary_path, class: "btn btn-primary btn-sm ms-3"
-  - else
+  - elsif @rainy_now == false
     .text-muted.mb-3
       %i.bi.bi-sun
       今日は雨ではありません

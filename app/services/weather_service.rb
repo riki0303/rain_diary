@@ -10,7 +10,12 @@ class WeatherService
   end
 
   def fetch
-    Rails.cache.fetch(cache_key, expires_in: CACHE_TTL, skip_nil: true) { fetch_uncached }
+    cached = Rails.cache.read(cache_key)
+    return cached if cached
+
+    result = fetch_uncached
+    Rails.cache.write(cache_key, result, expires_in: CACHE_TTL) if weather_data?(result)
+    result
   end
 
   private
@@ -33,6 +38,10 @@ class WeatherService
         appid: @api_key
       )
     end
+
+    return :rate_limited if response.status == 429
+    return :server_error if response.status.between?(500, 599)
+    # TODO: 他のエラーコード(404等)にも対応する
     return nil unless response.success?
 
     parse(response.body)
@@ -59,5 +68,9 @@ class WeatherService
       humidity:     main["humidity"],
       rainfall_mm:  body.dig("rain", "1h").to_f
     }
+  end
+
+  def weather_data?(result)
+    result.is_a?(Hash)
   end
 end

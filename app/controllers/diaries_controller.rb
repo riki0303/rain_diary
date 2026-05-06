@@ -1,19 +1,26 @@
 class DiariesController < ApplicationController
   before_action :set_diary, only: %i[show edit update destroy]
 
+  # TODO: 各アクションの処理をリファクタリングする
   def index
+    authorize Diary
     scope = policy_scope(Diary)
     @diaries      = scope.includes(:weather_record).order(recorded_on: :desc).page(params[:page])
     @total_count  = scope.count
     @yearly_count = scope.where(recorded_on: Date.current.all_year).count
 
-    # TODO: createアクションと同様に、位置情報の未許可 or API通信エラーかで処理を分ける
     coords = location_params
-    if coords
-      weather    = WeatherService.new(latitude: coords[0], longitude: coords[1]).fetch
-      @rainy_now = weather.present? && WeatherRecord.rainy?(weather[:weather_main])
-    else
+    if coords.nil?
       @rainy_now = nil
+      @location_missing = true
+    else
+      weather_data = WeatherService.new(latitude: coords[0], longitude: coords[1]).fetch
+      if weather_api_error?(weather_data)
+        flash.now[:alert] = weather_alert_for(weather_data)
+        @rainy_now = nil
+      else
+        @rainy_now = weather_data.present? && WeatherRecord.rainy?(weather_data[:weather_main])
+      end
     end
   end
 
@@ -40,6 +47,12 @@ class DiariesController < ApplicationController
 
     latitude, longitude = coords
     weather_data = WeatherService.new(latitude:, longitude:).fetch
+    alert = weather_alert_for(weather_data)
+    if alert
+      flash.now[:alert] = alert
+      return render :new, status: :unprocessable_entity
+    end
+
     if weather_data.blank?
       flash.now[:alert] = "現在の天気が取得できませんでした。しばらく経ってからお試しください"
       return render :new, status: :unprocessable_entity
@@ -81,6 +94,19 @@ class DiariesController < ApplicationController
 
   def diary_params
     params.require(:diary).permit(:title, :body, :mood)
+  end
+
+  def weather_api_error?(result)
+    result.is_a?(Symbol)
+  end
+
+  def weather_alert_for(result)
+    case result
+    when :rate_limited
+      "天気情報を取得できませんでした。しばらく時間を空けてからお試しください。"
+    when :server_error
+      "天気情報を取得できませんでした。時間をおいて再度お試しください。"
+    end
   end
 
   def location_params

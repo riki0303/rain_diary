@@ -101,11 +101,23 @@ RSpec.describe WeatherService do
       end
     end
 
-    context "レスポンスが 500 の場合" do
-      before { stub_connection(status: 500, body: { "message" => "internal server error" }) }
+    context "レスポンスが 429 の場合" do
+      before { stub_connection(status: 429, body: { "message" => "too many requests" }) }
 
-      it "nil を返す" do
-        expect(service.fetch).to be_nil
+      it ":rate_limited を返す" do
+        expect(service.fetch).to eq(:rate_limited)
+      end
+    end
+
+    context "レスポンスが 5xx の場合" do
+      [ 500, 502, 503, 504 ].each do |status|
+        context "#{status} のとき" do
+          before { stub_connection(status: status, body: { "message" => "server error" }) }
+
+          it ":server_error を返す" do
+            expect(service.fetch).to eq(:server_error)
+          end
+        end
       end
     end
 
@@ -128,7 +140,7 @@ RSpec.describe WeatherService do
 
     context "Faraday::TimeoutError が発生した場合" do
       it "nil を返しエラーをログに記録する" do
-        allow_any_instance_of(WeatherService).to receive(:build_connection).and_raise(Faraday::TimeoutError)
+        allow(service).to receive(:build_connection).and_raise(Faraday::TimeoutError)
         expect(Rails.logger).to receive(:error).with(/WeatherService/)
         expect(service.fetch).to be_nil
       end
@@ -163,7 +175,7 @@ RSpec.describe WeatherService do
       expect(result1).to eq(result2)
     end
 
-    it "失敗(nil)はキャッシュされず次回呼び出しで再試行する" do
+    it "失敗(:server_error)はキャッシュされず次回呼び出しで再試行する" do
       stubs_500 = Faraday::Adapter::Test::Stubs.new
       stubs_500.get(WeatherService::ENDPOINT) { [ 500, { "Content-Type" => "application/json" }, {} ] }
       conn500 = Faraday.new(url: WeatherService::BASE_URL) { |f| f.response :json; f.adapter :test, stubs_500 }
@@ -174,7 +186,22 @@ RSpec.describe WeatherService do
 
       allow(service).to receive(:build_connection).and_return(conn500, conn200)
 
-      expect(service.fetch).to be_nil
+      expect(service.fetch).to eq(:server_error)
+      expect(service.fetch).to be_a(Hash)
+    end
+
+    it ":rate_limited はキャッシュされず次回呼び出しで再試行する" do
+      stubs_429 = Faraday::Adapter::Test::Stubs.new
+      stubs_429.get(WeatherService::ENDPOINT) { [ 429, { "Content-Type" => "application/json" }, {} ] }
+      conn429 = Faraday.new(url: WeatherService::BASE_URL) { |f| f.response :json; f.adapter :test, stubs_429 }
+
+      stubs_200 = Faraday::Adapter::Test::Stubs.new
+      stubs_200.get(WeatherService::ENDPOINT) { [ 200, { "Content-Type" => "application/json" }, success_body_with_rain ] }
+      conn200 = Faraday.new(url: WeatherService::BASE_URL) { |f| f.response :json; f.adapter :test, stubs_200 }
+
+      allow(service).to receive(:build_connection).and_return(conn429, conn200)
+
+      expect(service.fetch).to eq(:rate_limited)
       expect(service.fetch).to be_a(Hash)
     end
 
