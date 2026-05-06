@@ -39,6 +39,8 @@ class WeatherService
       )
     end
 
+    # TODO: 例外設計が適切か思考する。
+    # TODO: 調査できるように必要であればログを残す
     return :bad_request  if response.status == 400
     return :unauthorized if response.status == 401
     return :not_found    if response.status == 404
