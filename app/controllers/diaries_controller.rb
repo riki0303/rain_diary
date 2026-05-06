@@ -106,6 +106,8 @@ class DiariesController < ApplicationController
       "天気情報を取得できませんでした。しばらく時間を空けてからお試しください。"
     when :server_error
       "天気情報を取得できませんでした。時間をおいて再度お試しください。"
+    when Symbol
+      "天気情報を取得できませんでした。"
     end
   end
 

@@ -39,9 +39,11 @@ class WeatherService
       )
     end
 
+    return :bad_request  if response.status == 400
+    return :unauthorized if response.status == 401
+    return :not_found    if response.status == 404
     return :rate_limited if response.status == 429
     return :server_error if response.status.between?(500, 599)
-    # TODO: 他のエラーコード(404等)にも対応する
     return nil unless response.success?
 
     parse(response.body)

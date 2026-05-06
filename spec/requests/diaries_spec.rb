@@ -92,6 +92,15 @@ RSpec.describe "Diaries", type: :request do
           expect(response.body).to include("時間をおいて")
         end
       end
+
+      context "lat/lng クエリあり・WeatherService が :not_found を返すとき" do
+        before { allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:not_found) }
+
+        it "汎用エラーメッセージが表示される" do
+          get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
+          expect(response.body).to include("天気情報を取得できませんでした。")
+        end
+      end
     end
   end
 
@@ -216,6 +225,28 @@ RSpec.describe "Diaries", type: :request do
       it "サーバーエラーメッセージが表示される" do
         post diaries_path, params: valid_params
         expect(response.body).to include("時間をおいて")
+      end
+    end
+
+    context "WeatherService が :not_found を返す場合" do
+      before do
+        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:not_found)
+      end
+
+      it "422 を返す" do
+        post diaries_path, params: valid_params
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it "日記が作成されない" do
+        expect {
+          post diaries_path, params: valid_params
+        }.not_to change(user.diaries, :count)
+      end
+
+      it "汎用エラーメッセージが表示される" do
+        post diaries_path, params: valid_params
+        expect(response.body).to include("天気情報を取得できませんでした。")
       end
     end
 
