@@ -1,7 +1,7 @@
 class DiariesController < ApplicationController
   before_action :set_diary, only: %i[show edit update destroy]
 
-  # TODO: 各アクションの処理をリファクタリングする
+  # TODO: 行数が長いアクションに関してリファクタしたい
   def index
     authorize Diary
     scope = policy_scope(Diary)
@@ -14,14 +14,15 @@ class DiariesController < ApplicationController
       @rainy_now = nil
       @location_missing = true
     else
-      weather_data = WeatherService.new(latitude: coords[0], longitude: coords[1]).fetch
-      if weather_api_error?(weather_data)
-        flash.now[:alert] = weather_alert_for(weather_data)
-        @rainy_now = nil
-      else
-        @rainy_now = weather_data.present? && WeatherRecord.rainy?(weather_data[:weather_main])
-      end
+      weather_data = WeatherService.new(latitude: coords[0], longitude: coords[1]).fetch!
+      @rainy_now = WeatherRecord.rainy?(weather_data[:weather_main])
     end
+  rescue WeatherService::RateLimitedError
+    flash.now[:alert] = "天気情報を取得できませんでした。しばらく時間を空けてからお試しください。"
+    @rainy_now = nil
+  rescue WeatherService::Error
+    flash.now[:alert] = "天気情報を取得できませんでした。"
+    @rainy_now = nil
   end
 
   def show
@@ -38,7 +39,6 @@ class DiariesController < ApplicationController
     @diary.recorded_on = Date.current # NOTE: 雨の日以外を選択出来ないように日付は固定
     authorize @diary
 
-    # TODO: 早期リターン周りをprivateに隠蔽しても良いかも
     coords = location_params
     if coords.nil?
       flash.now[:alert] = "位置情報を許可してください"
@@ -46,18 +46,7 @@ class DiariesController < ApplicationController
     end
 
     latitude, longitude = coords
-    weather_data = WeatherService.new(latitude:, longitude:).fetch
-    alert = weather_alert_for(weather_data)
-    if alert
-      flash.now[:alert] = alert
-      return render :new, status: :unprocessable_entity
-    end
-
-    if weather_data.blank?
-      flash.now[:alert] = "現在の天気が取得できませんでした。しばらく経ってからお試しください"
-      return render :new, status: :unprocessable_entity
-    end
-
+    weather_data = WeatherService.new(latitude:, longitude:).fetch!
     @diary.assign_weather(weather_data)
 
     if @diary.save
@@ -65,6 +54,12 @@ class DiariesController < ApplicationController
     else
       render :new, status: :unprocessable_entity
     end
+  rescue WeatherService::RateLimitedError
+    flash.now[:alert] = "天気情報を取得できませんでした。しばらく時間を空けてからお試しください。"
+    render :new, status: :unprocessable_entity
+  rescue WeatherService::Error
+    flash.now[:alert] = "天気情報を取得できませんでした。"
+    render :new, status: :unprocessable_entity
   end
 
   def edit
@@ -94,21 +89,6 @@ class DiariesController < ApplicationController
 
   def diary_params
     params.require(:diary).permit(:title, :body, :mood)
-  end
-
-  def weather_api_error?(result)
-    result.is_a?(Symbol)
-  end
-
-  def weather_alert_for(result)
-    case result
-    when :rate_limited
-      "天気情報を取得できませんでした。しばらく時間を空けてからお試しください。"
-    when :server_error
-      "天気情報を取得できませんでした。時間をおいて再度お試しください。"
-    when Symbol
-      "天気情報を取得できませんでした。"
-    end
   end
 
   def location_params
