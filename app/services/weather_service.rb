@@ -47,14 +47,14 @@ class WeatherService
     end
 
     unless response.success?
-      Rails.logger.error("[WeatherService] HTTP error: status=#{response.status}")
-      raise ApiError, "status=#{response.status}"
+      Rails.logger.error("[WeatherService] HTTP error: status=#{response.status} message=#{response.body['message']}")
+      raise ApiError
     end
 
     parse(response.body)
   rescue Faraday::Error => e
-    Rails.logger.error("[WeatherService] Faraday error: #{e.class}")
-    raise ApiError, "#{e.class}: #{e.message}"
+    Rails.logger.error("[WeatherService] Faraday error: #{e.class}: #{e.message}")
+    raise ApiError
   end
 
   def build_connection
