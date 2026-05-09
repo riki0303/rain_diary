@@ -42,7 +42,7 @@ RSpec.describe "Diaries", type: :request do
 
       context "lat/lng クエリあり・WeatherService が Rain を返すとき" do
         before do
-          allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+          allow_any_instance_of(WeatherService).to receive(:fetch!).and_return(
             { weather_main: "Rain", city_name: "Tokyo", description: "雨", temp: 15.0, humidity: 80, rainfall_mm: 3.0 }
           )
         end
@@ -55,7 +55,7 @@ RSpec.describe "Diaries", type: :request do
 
       context "lat/lng クエリあり・WeatherService が Clear を返すとき" do
         before do
-          allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+          allow_any_instance_of(WeatherService).to receive(:fetch!).and_return(
             { weather_main: "Clear", city_name: "Tokyo", description: "晴れ", temp: 25.0, humidity: 50, rainfall_mm: 0.0 }
           )
         end
@@ -66,39 +66,21 @@ RSpec.describe "Diaries", type: :request do
         end
       end
 
-      context "lat/lng クエリあり・WeatherService が nil を返すとき" do
-        before { allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil) }
+      context "lat/lng クエリあり・WeatherService が ApiError を raise するとき" do
+        before { allow_any_instance_of(WeatherService).to receive(:fetch!).and_raise(WeatherService::ApiError) }
 
-        it "雨でない表示になる" do
+        it "天気取得失敗メッセージが表示される" do
           get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
-          expect(response.body).to include("今日は雨ではありません")
+          expect(response.body).to include("天気情報を取得できませんでした。")
         end
       end
 
-      context "lat/lng クエリあり・WeatherService が :rate_limited を返すとき" do
-        before { allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:rate_limited) }
+      context "lat/lng クエリあり・WeatherService が RateLimitedError を raise するとき" do
+        before { allow_any_instance_of(WeatherService).to receive(:fetch!).and_raise(WeatherService::RateLimitedError) }
 
         it "レート制限エラーメッセージが表示される" do
           get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
           expect(response.body).to include("しばらく時間を空けて")
-        end
-      end
-
-      context "lat/lng クエリあり・WeatherService が :server_error を返すとき" do
-        before { allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:server_error) }
-
-        it "サーバーエラーメッセージが表示される" do
-          get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
-          expect(response.body).to include("時間をおいて")
-        end
-      end
-
-      context "lat/lng クエリあり・WeatherService が :not_found を返すとき" do
-        before { allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:not_found) }
-
-        it "汎用エラーメッセージが表示される" do
-          get diaries_path, params: { latitude: 35.68, longitude: 139.65 }
-          expect(response.body).to include("天気情報を取得できませんでした。")
         end
       end
     end
@@ -137,7 +119,7 @@ RSpec.describe "Diaries", type: :request do
 
     before do
       sign_in user
-      allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+      allow_any_instance_of(WeatherService).to receive(:fetch!).and_return(
         city_name: "Tokyo", weather_main: "Rain", description: "小雨",
         temp: 14.5, humidity: 82, rainfall_mm: 3.2
       )
@@ -162,9 +144,9 @@ RSpec.describe "Diaries", type: :request do
       end
     end
 
-    context "WeatherService が nil を返す場合" do
+    context "WeatherService が ApiError を raise する場合" do
       before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(nil)
+        allow_any_instance_of(WeatherService).to receive(:fetch!).and_raise(WeatherService::ApiError)
       end
 
       it "日記が作成されない" do
@@ -180,13 +162,13 @@ RSpec.describe "Diaries", type: :request do
 
       it "天気取得失敗メッセージが表示される" do
         post diaries_path, params: valid_params
-        expect(response.body).to include("現在の天気が取得できませんでした")
+        expect(response.body).to include("天気情報を取得できませんでした。")
       end
     end
 
-    context "WeatherService が :rate_limited を返す場合" do
+    context "WeatherService が RateLimitedError を raise する場合" do
       before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:rate_limited)
+        allow_any_instance_of(WeatherService).to receive(:fetch!).and_raise(WeatherService::RateLimitedError)
       end
 
       it "422 を返す" do
@@ -206,53 +188,9 @@ RSpec.describe "Diaries", type: :request do
       end
     end
 
-    context "WeatherService が :server_error を返す場合" do
-      before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:server_error)
-      end
-
-      it "422 を返す" do
-        post diaries_path, params: valid_params
-        expect(response).to have_http_status(:unprocessable_entity)
-      end
-
-      it "日記が作成されない" do
-        expect {
-          post diaries_path, params: valid_params
-        }.not_to change(user.diaries, :count)
-      end
-
-      it "サーバーエラーメッセージが表示される" do
-        post diaries_path, params: valid_params
-        expect(response.body).to include("時間をおいて")
-      end
-    end
-
-    context "WeatherService が :not_found を返す場合" do
-      before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(:not_found)
-      end
-
-      it "422 を返す" do
-        post diaries_path, params: valid_params
-        expect(response).to have_http_status(:unprocessable_entity)
-      end
-
-      it "日記が作成されない" do
-        expect {
-          post diaries_path, params: valid_params
-        }.not_to change(user.diaries, :count)
-      end
-
-      it "汎用エラーメッセージが表示される" do
-        post diaries_path, params: valid_params
-        expect(response.body).to include("天気情報を取得できませんでした。")
-      end
-    end
-
     context "WeatherService が Clear を返す場合" do
       before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+        allow_any_instance_of(WeatherService).to receive(:fetch!).and_return(
           city_name: "Tokyo", weather_main: "Clear", description: "晴れ",
           temp: 25.0, humidity: 50, rainfall_mm: 0.0
         )
@@ -277,7 +215,7 @@ RSpec.describe "Diaries", type: :request do
 
     context "WeatherService が Drizzle を返す場合" do
       before do
-        allow_any_instance_of(WeatherService).to receive(:fetch).and_return(
+        allow_any_instance_of(WeatherService).to receive(:fetch!).and_return(
           city_name: "Tokyo", weather_main: "Drizzle", description: "霧雨",
           temp: 14.0, humidity: 85, rainfall_mm: 1.0
         )

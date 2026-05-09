@@ -3,18 +3,22 @@ class WeatherService
   ENDPOINT  = "/data/2.5/weather"
   CACHE_TTL = 1.hour
 
+  class Error < StandardError; end
+  class RateLimitedError < Error; end
+  class ApiError < Error; end
+
   def initialize(latitude:, longitude:, api_key: ENV["OPENWEATHER_API_KEY"])
     @latitude  = latitude
     @longitude = longitude
     @api_key   = api_key
   end
 
-  def fetch
+  def fetch!
     cached = Rails.cache.read(cache_key)
     return cached if cached
 
     result = fetch_uncached
-    Rails.cache.write(cache_key, result, expires_in: CACHE_TTL) if weather_data?(result)
+    Rails.cache.write(cache_key, result, expires_in: CACHE_TTL)
     result
   end
 
@@ -25,8 +29,6 @@ class WeatherService
   end
 
   def fetch_uncached
-    return nil if @api_key.blank?
-
     Rails.logger.debug("[WeatherService] calling API")
 
     response = build_connection.get(ENDPOINT) do |req|
@@ -39,19 +41,20 @@ class WeatherService
       )
     end
 
-    # TODO: 例外設計が適切か思考する。
-    # TODO: 調査できるように必要であればログを残す
-    return :bad_request  if response.status == 400
-    return :unauthorized if response.status == 401
-    return :not_found    if response.status == 404
-    return :rate_limited if response.status == 429
-    return :server_error if response.status.between?(500, 599)
-    return nil unless response.success?
+    if response.status == 429
+      Rails.logger.info("[WeatherService] rate limited")
+      raise RateLimitedError
+    end
+
+    unless response.success?
+      Rails.logger.error("[WeatherService] HTTP error: status=#{response.status} message=#{response.body['message']}")
+      raise ApiError
+    end
 
     parse(response.body)
   rescue Faraday::Error => e
-    Rails.logger.error("[WeatherService] Faraday error: #{e.class}")
-    nil
+    Rails.logger.error("[WeatherService] Faraday error: #{e.class}: #{e.message}")
+    raise ApiError
   end
 
   def build_connection
@@ -72,9 +75,5 @@ class WeatherService
       humidity:     main["humidity"],
       rainfall_mm:  body.dig("rain", "1h").to_f
     }
-  end
-
-  def weather_data?(result)
-    result.is_a?(Hash)
   end
 end
