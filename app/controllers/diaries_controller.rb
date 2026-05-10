@@ -6,8 +6,6 @@ class DiariesController < ApplicationController
     authorize Diary
     scope = policy_scope(Diary)
     @diaries      = scope.includes(:weather_record).order(recorded_on: :desc).page(params[:page])
-    @total_count  = scope.count
-    @yearly_count = scope.where(recorded_on: Date.current.all_year).count
 
     coords = location_params
     if coords.nil?
