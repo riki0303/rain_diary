@@ -94,9 +94,12 @@ class DiariesController < ApplicationController
   def location_params
     lat = params[:latitude].to_f
     lng = params[:longitude].to_f
-    # TODO: ロジックを切り出す
-    return nil unless lat.between?(-90, 90) && lng.between?(-180, 180) && (lat != 0.0 || lng != 0.0)
+    return nil unless valid_coordinates?(lat, lng)
 
     [ lat, lng ]
+  end
+
+  def valid_coordinates?(lat, lng)
+    lat.between?(-90, 90) && lng.between?(-180, 180) && (lat != 0.0 || lng != 0.0)
   end
 end
