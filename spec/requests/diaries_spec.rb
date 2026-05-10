@@ -265,6 +265,11 @@ RSpec.describe "Diaries", type: :request do
           post diaries_path, params: invalid_location_params
         }.not_to change(user.diaries, :count)
       end
+
+      it "位置情報エラーメッセージが表示される" do
+        post diaries_path, params: invalid_location_params
+        expect(response.body).to include("位置情報を許可してください")
+      end
     end
 
     context "latitude / longitude が範囲外の値の場合" do
@@ -281,6 +286,11 @@ RSpec.describe "Diaries", type: :request do
         expect {
           post diaries_path, params: out_of_range_params
         }.not_to change(user.diaries, :count)
+      end
+
+      it "位置情報エラーメッセージが表示される" do
+        post diaries_path, params: out_of_range_params
+        expect(response.body).to include("位置情報を許可してください")
       end
     end
   end
