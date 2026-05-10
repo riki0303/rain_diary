@@ -59,34 +59,6 @@ RSpec.describe Diary, type: :model do
       it "recorded_onがあれば有効" do
         expect(build(:diary, recorded_on: Date.current)).to be_valid
       end
-
-      context "on: :create" do
-        it "当日なら有効" do
-          expect(build(:diary, recorded_on: Date.current)).to be_valid
-        end
-
-        it "昨日なら無効" do
-          expect(build(:diary, recorded_on: Date.yesterday)).not_to be_valid
-        end
-
-        it "翌日なら無効" do
-          expect(build(:diary, recorded_on: Date.tomorrow)).not_to be_valid
-        end
-      end
-
-      context "on: :update" do
-        let!(:diary) { create(:diary, recorded_on: Date.current) }
-
-        it "recorded_onを変更すると無効" do
-          diary.recorded_on = Date.yesterday
-          expect(diary).not_to be_valid
-        end
-
-        it "recorded_on以外を変更しても有効" do
-          diary.title = "新しいタイトル"
-          expect(diary).to be_valid
-        end
-      end
     end
 
     context "mood" do
@@ -116,8 +88,19 @@ RSpec.describe Diary, type: :model do
       end
     end
 
-    # TODO: context update にまとめる
-    context "雨判定 (current_weather_main)" do
+    context "on: :create" do
+      it "当日なら有効" do
+        expect(build(:diary, recorded_on: Date.current)).to be_valid
+      end
+
+      it "昨日なら無効" do
+        expect(build(:diary, recorded_on: Date.yesterday)).not_to be_valid
+      end
+
+      it "翌日なら無効" do
+        expect(build(:diary, recorded_on: Date.tomorrow)).not_to be_valid
+      end
+
       it "current_weather_main が Rain なら有効" do
         expect(build(:diary, current_weather_main: "Rain")).to be_valid
       end
@@ -149,15 +132,25 @@ RSpec.describe Diary, type: :model do
         expect(diary).not_to be_valid
         expect(diary.errors[:base]).to include("雨の日のみ日記を記録できます")
       end
+    end
 
-      context "on: :update" do
-        let!(:diary) { create(:diary) }
+    context "on: :update" do
+      let!(:diary) { create(:diary) }
 
-        it "current_weather_main 未設定でも更新時には有効" do
-          diary.current_weather_main = nil
-          diary.title = "新しいタイトル"
-          expect(diary).to be_valid
-        end
+      it "recorded_onを変更すると無効" do
+        diary.recorded_on = Date.yesterday
+        expect(diary).not_to be_valid
+      end
+
+      it "recorded_on以外を変更しても有効" do
+        diary.title = "新しいタイトル"
+        expect(diary).to be_valid
+      end
+
+      it "current_weather_main 未設定でも更新時には有効" do
+        diary.current_weather_main = nil
+        diary.title = "新しいタイトル"
+        expect(diary).to be_valid
       end
     end
   end
